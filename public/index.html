@@ -1,30 +1,556 @@
-<!DOCTYPE html>
-<html lang="en">
+  <!DOCTYPE html>
+  <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="theme-color" content="#000000">
-    <!--
-      manifest.json provides metadata used when your web app is added to the
-      homescreen on Android. See https://developers.google.com/web/fundamentals/engage-and-retain/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
-    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1kochi v1.6.2</title>
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
+  <!-- Include Bloodhound and Typeahead.js -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script>
+function titleCase(str) {
+  return str.split(' ').map(function (word) {
+    return word[0].toUpperCase() + word.substring(1);
+  }).join(' ');
+}
+
+function fullDay(str) {
+  switch (str) {
+    case 'Tue':
+      return 'Tuesday';
+    case 'Wed':
+      return 'Wednesday';
+    case 'Thu':
+      return 'Thursday';
+    case 'Sat':
+      return 'Saturday';
+    default:
+      return str + 'day';
+  }
+}
+
+$(function() {
+  
+  var $wrapper = $('.wrapper'),
+    $panel = $wrapper.find('.panel'),
+    $city = $panel.find('#city'),
+    $weather = $panel.find('.weather'),
+    $group = $panel.find('.group'),
+    $dt = $group.find('#dt'),
+    $description = $group.find('#description'),
+    $wind = $group.find('#wind'),
+    $humidity = $group.find('#humidity'),
+    $temperature = $weather.find('#temperature'),
+    $temp = $temperature.find('#temp'),
+    $icon = $temp.find('#condition'),
+    $tempNumber = $temp.find('#num'),
+    $celsius = $temp.find('#celsius'),
+    $fahrenheit = $temp.find('#fahrenheit'),
+    $forecast = $weather.find('#forecast'),
+    $search = $wrapper.find('search'),
+    $form = $search.find('form'),
+    $button = $form.find('#button');
+
+  $.ajax({
+      dataType: 'json',
+      url: '//ipapi.co/202.164.139.13/json/'
+    })
+    .then(function(data) {
+      var yourLocation = data.city + ',' + data.postal + ',' + data.country;
+      getWeather(yourLocation);
+    });
+
+  function getWeather(input) {
+
+    var appid = '47833da05905bf9bc6b0932111da8f34';
+    var requestWeather = $.ajax({
+      dataType: 'json',
+      url: '//api.openweathermap.org/data/2.5/weather',
+      data: {
+        q: input,
+        units: 'imperial',
+        appid: appid
+      }
+    });
+    var requestForecast = $.ajax({
+      dataType: 'json',
+      url: '//api.openweathermap.org/data/2.5/forecast/daily',
+      data: {
+        q: input,
+        units: 'imperial',
+        cnt: '6',
+        appid: appid
+      }
+    });
+
+    $fahrenheit.addClass('active').removeAttr('href');
+    $celsius.removeClass('active').attr("href", '#');
+    $icon.removeClass();
+    $button.removeClass().addClass('button transparent');
+
+    requestWeather.done(function(data) {
+
+      var weather = document.getElementById('weather');
+      if (data.cod === '404') {
+        $city.html('city not found');
+        setBackground('color404', 'button404');
+        weather.style.display = 'none';
+      } else weather.style.display = '';
+
+      var dt = new Date(data.dt * 1000).toString().split(' ');
+
+      var title = data.sys.country
+        ? data.name + ', ' + data.sys.country
+        : data.name;
+
+      $city.html(title);
+      $tempNumber.html(Math.round(data.main.temp));
+      $description.html(titleCase(data.weather[0].description));
+      $wind.html('Wind: ' + data.wind.speed + ' mph');
+      $humidity.html('Humidity ' + data.main.humidity + '%');
+      $dt.html(fullDay(dt[0]) + ' ' + dt[4].substring(0, 5));
+
+      $celsius.on('click', toCelsius);
+      $fahrenheit.on('click', toFahrenheit);
+
+      function toCelsius() {
+        $(this).addClass('active').removeAttr('href');
+        $fahrenheit.removeClass('active').attr('href', '#');
+        $tempNumber.html(Math.round((data.main.temp - 32) * (5 / 9)));
+      }
+
+      function toFahrenheit() {
+        $(this).addClass('active').removeAttr('href');
+        $celsius.removeClass('active').attr("href", '#');
+        $tempNumber.html(Math.round(data.main.temp));
+      }
+
+      function setBackground(background, button) {
+        $('body').removeClass().addClass(background);
+        $button.off().hover(function() {
+          $(this).removeClass('transparent').addClass(button);
+        }, function() {
+          $(this).removeClass().addClass('button transparent');
+        });
+      }
+
+      if (data.main.temp >= 80) setBackground('hot', 'button-hot');
+      else if (data.main.temp >= 70) setBackground('warm', 'button-warm');
+      else if (data.main.temp >= 60) setBackground('cool', 'button-cool');
+      else setBackground('cold', 'button-cold');
+
+      switch (data.weather[0].icon) {
+        case '01d':
+          $icon.addClass('wi wi-day-sunny');
+          break;
+        case '02d':
+          $icon.addClass('wi wi-day-sunny-overcast');
+          break;
+        case '01n':
+          $icon.addClass('wi wi-night-clear');
+          break;
+        case '02n':
+          $icon.addClass('wi wi-night-partly-cloudy');
+          break;
+      }
+
+      switch (data.weather[0].icon.substr(0, 2)) {
+        case '03':
+          $icon.addClass('wi wi-cloud');
+          break;
+        case '04':
+          $icon.addClass('wi wi-cloudy');
+          break;
+        case '09':
+          $icon.addClass('wi wi-showers');
+          break;
+        case '10':
+          $icon.addClass('wi wi-rain');
+          break;
+        case '11':
+          $icon.addClass('wi wi-thunderstorm');
+          break;
+        case '13':
+          $icon.addClass('wi wi-snow');
+          break;
+        case '50':
+          $icon.addClass('wi wi-fog');
+          break;
+      }
+    });
+
+    requestForecast.done(function(data) {
+
+      $celsius.on('click', toCelsius);
+      $fahrenheit.on('click', toFahrenheit);
+
+      var forecast = [];
+      var length = data.list.length;
+      for (var i = 1; i < length; i++) {
+        forecast.push({
+          date: new Date(data.list[i].dt * 1000).toString().split(' ')[0],
+          fahrenheit: {
+            high: Math.round(data.list[i].temp.max),
+            low: Math.round(data.list[i].temp.min),
+          },
+          celsius: {
+            high: Math.round((data.list[i].temp.max - 32) * (5 / 9)),
+            low: Math.round((data.list[i].temp.min - 32) * (5 / 9))
+          }
+        });
+      }
+
+      function toCelsius() {
+        doForecast('celsius');
+      }
+
+      function toFahrenheit() {
+        doForecast('fahrenheit');
+      }
+
+      function doForecast(unit) {
+        var arr = [];
+        var length = forecast.length;
+        for (var i = 0; i < length; i++) {
+          arr[i] = ("<div class='block'><h3 class='secondary'>" + forecast[i].date + "</h3><h2 class='high'>" + forecast[i][unit].high + "</h2><h4 class='secondary'>" + forecast[i][unit].low + "</h4></div>");
+        }
+        $forecast.html(arr.join(''));
+      }
+
+      doForecast('fahrenheit');
+    });
+  }
+
+  $form.submit(function(event) {
+    var input = document.getElementById('search').value;
+    var inputLength = input.length;
+    if (inputLength) getWeather(input);
+    event.preventDefault();
+  });
+
+});
+
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.min.js"></script>
+
+<script type="text/javascript">
+  $(document).ready(function () {
+    const contentWrapper = $(".content-wrapper");
+    let totalItemsLoaded = 0;
+    const uniqueArticleIds = new Set();
+
+    const feeds = [
+          {
+        url:
+          "https://www.google.co.in/alerts/feeds/14378336641880761445/3728911973530232813",
+        items: 12,
+        category: "/breaking",
+      }, {
+        url:
+          "https://www.google.co.in/alerts/feeds/14378336641880761445/14214467418902467187",
+        items: 12,
+        category: "/airlines",
+      },
+
+            {
+        url:
+          "https://www.google.co.in/alerts/feeds/14378336641880761445/9979423434097815526",
+        items: 12,
+        category: "/literature",
+      },
+
+            {
+        url:
+          "https://www.google.co.in/alerts/feeds/14378336641880761445/9979423434097814611",
+        items: 12,
+        category: "/food",
+      },
+            {
+        url:
+          "https://www.google.co.in/alerts/feeds/14378336641880761445/3347891586809145225",
+        items: 12,
+        category: "/tourism",
+      },
+            {
+        url:
+          "https://www.google.co.in/alerts/feeds/14378336641880761445/9496655339021153842",
+        items: 12,
+        category: "/travel",
+      },
+
+
+            {
+        url:
+          "https://www.google.co.in/alerts/feeds/14378336641880761445/1081391072984560739",
+        items: 3,
+        category: "/startups",
+      },
+
+            {
+        url:
+          "https://www.google.co.in/alerts/feeds/14378336641880761445/16488713094048669270",
+        items: 12,
+        category: "/ME",
+      },
+
+            {
+        url:
+          "https://www.google.co.in/alerts/feeds/14378336641880761445/309089573981946164",
+        items: 12,
+        category: "/world",
+      },
+
+
+      {
+        url:
+          "https://www.google.com/alerts/feeds/14378336641880761445/10069732107167807509",
+        items: 12,
+        category: "/city",
+      },
+      {
+        url:
+          "https://www.google.com/alerts/feeds/14378336641880761445/8089595701251970144",
+        items: 13,
+        category: "/events",
+      },
+      {
+        url:
+          "https://www.google.co.in/alerts/feeds/14378336641880761445/14278107360167118508",
+        items: 16,
+        category: "/kerala",
+      },
+            {
+        url:
+          "https://www.google.com/alerts/feeds/14378336641880761445/6450012512796052229",
+        items: 16,
+        category: "/more",
+      },
+            {
+        url:
+          "https://www.google.com/alerts/feeds/14378336641880761445/6701388071525834756",
+        items: 16,
+        category: "/india",
+      },
+            {
+        url:
+          "https://www.google.com/alerts/feeds/14378336641880761445/9810914736097805522",
+        items: 16,
+        category: "/movies",
+      },
+    ];
+   
+
+    // Initialize Bloodhound with your data source
+    const searchData = [
+      { title: "Item 1", link: "https://example.com/item1" },
+      { title: "Item 2", link: "https://example.com/item2" },
+      // Add more items here
+    ];
+
+   // Infinite Scroll
+            const loadMoreThreshold = 200; // Threshold in pixels from the bottom to trigger loading more items
+            $(window).scroll(function () {
+                if ($(window).scrollTop() + $(window).height() >= $(document).height() - loadMoreThreshold) {
+                    loadMoreItems();
+                }
+            });
+
+            let currentPage = 1;
+            const itemsPerPage = 12;
+
+            function loadMoreItems() {
+                const selectedCategory = $("#category-filter").val();
+                const filteredFeeds = feeds.filter(feed => selectedCategory === "all" || feed.category === selectedCategory);
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const feedsToLoad = filteredFeeds.slice(startIndex, endIndex);
+
+                feedsToLoad.forEach(feed => {
+                    loadRSS(feed.url, feed.items, feed.category);
+                });
+
+                currentPage++;
+            }
+
+            // Search Input
+            $("#search-input").on('input', function () {
+                const query = $(this).val();
+                filterBySearch(query);
+            });
+
+            function filterBySearch(query) {
+                const selectedCategory = $("#category-filter").val();
+
+                if (selectedCategory === "all") {
+                    contentWrapper.find(".content-item, .news-card").removeClass("content-hidden");
+                } else {
+                    contentWrapper.find(".content-item, .news-card").addClass("content-hidden");
+                    contentWrapper.find(`.news-card[data-category="${selectedCategory}"], .content-item[data-category="${selectedCategory}"]`).removeClass("content-hidden");
+                }
+
+                if (query) {
+                    contentWrapper.find(".content-item, .news-card").addClass("content-hidden");
+                    contentWrapper.find(`.news-card:contains('${query}'), .content-item:contains('${query}')`).removeClass("content-hidden");
+                }
+            }
+
+    // Populate the category filter dropdown
+    const uniqueCategories = Array.from(new Set(feeds.map((feed) => feed.category)));
+    const categoryFilter = $("#category-filter");
+
+    uniqueCategories.forEach((category) => {
+      const option = `<option value="${category}">${category}</option>`;
+      categoryFilter.append(option);
+    });
+
+    const totalItemsToFetch = feeds.reduce(
+      (total, feed) => total + feed.items,
+      0
+    );
+
+    feeds.forEach(function (feed) {
+      loadRSS(feed.url, feed.items, feed.category);
+    });
+
+    document.querySelector(".preloader").style.display = "none";
+
+    function loadRSS(link, numItems, category) {
+      var url = link;
+
+      $.ajax({
+        url: `https://api.rss2json.com/v1/api.json?rss_url=${url}`,
+        method: "GET",
+        dataType: "json",
+        success: function (result) {
+          if (result.status === "ok") {
+            var entries = result.items.slice(0, numItems);
+            if (entries.length > 0) {
+              entries.forEach(function (entry) {
+                if (!uniqueArticleIds.has(entry.guid)) {
+                  var imageHTML = extractImageFromContent(
+                    entry.content || entry.description
+                  );
+                  var excerpt = getExcerptWithoutImages(entry.description);
+                  var readMoreLink = entry.link;
+                  var postDate = new Date(entry.pubDate).toLocaleDateString();
+                  var keywords = encodeURIComponent(
+                    getKeywordsFromContent(entry)
+                  );
+
+                  var title = entry.title;
+                  var source = "";
+                  var titleParts = title.split(" - ");
+
+                  if (titleParts.length > 1) {
+                    title = titleParts[0];
+                    source = titleParts[1];
+                  }
+
+                  var articleHTML = `
+                    <div class="news-card placeholder-content" data-category="${category}">
+                      <a href="${readMoreLink}" class="news-card__card-link" target="_blank"></a>
+                      ${imageHTML || `<img src="https://source.unsplash.com/600x400/?${keywords}" alt="" class="news-card__image">`}
+                      <div class="news-card__text-wrapper">
+                        <h2 class="news-card__title">${title}</h2>
+                        <div class="news-card__source">${source}</div>
+                        <div class="news-card__meta">
+                          <div class="news-card__post-date">${postDate}</div>
+                        </div>
+                        <div class="news-card__details-wrapper">
+                          <p class="news-card__excerpt">${excerpt}</p>
+                          <a href="${entry.link}" class="news-card__read-more">Full story <i class="fas fa-long-arrow-alt-right"></i></a>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+
+                  var feedItemContainer = $('<div class="content-item"></div>');
+                  feedItemContainer.attr('data-category', category);
+                  feedItemContainer.html(articleHTML);
+                  contentWrapper.append(feedItemContainer);
+
+                  uniqueArticleIds.add(entry.guid);
+                  totalItemsLoaded++;
+
+                  if (totalItemsLoaded >= totalItemsToFetch) {
+                    document.querySelector(".preloader").style.display = "none";
+                  }
+                }
+              });
+            } else {
+              console.log("No entries found.");
+            }
+          } else {
+            console.log("Failed to fetch RSS feed.");
+          }
+        },
+        error: function () {
+          console.log("Error fetching RSS feed.");
+        },
+      });
+    }
+
+    function extractImageFromContent(content) {
+      var imgRegex = /<img[^>]*src="([^"]+)"[^>]*>/;
+      var imgMatch = imgRegex.exec(content);
+
+      if (imgMatch && imgMatch.length > 1) {
+        return imgMatch[0];
+      } else {
+        return "";
+      }
+    }
+
+    function getExcerptWithoutImages(description) {
+      if (!description) {
+        return "";
+      }
+
+      var sanitizedDescription = description.replace(
+        /<img[^>]*>|<table[\s\S]*?<\/table>/gi,
+        ""
+      );
+
+      var maxExcerptLength = 250;
+      if (sanitizedDescription.length > maxExcerptLength) {
+        sanitizedDescription =
+          sanitizedDescription.substring(0, maxExcerptLength) + "...";
+      }
+
+      return sanitizedDescription;
+    }
+
+    function getKeywordsFromContent(entry) {
+      var content = entry.content || entry.description;
+      var keywords = "";
+
+      if (content) {
+        var contentWords = content.split(" ");
+        keywords = contentWords.join(",");
+      }
+
+      return keywords;
+    }
+
+    $("#category-filter").change(function () {
+      const selectedCategory = $(this).val();
+
+      if (selectedCategory === "all") {
+        contentWrapper.find(".content-item, .news-card").removeClass("content-hidden");
+      } else {
+        contentWrapper.find(".content-item, .news-card").addClass("content-hidden");
+        contentWrapper.find(`.news-card[data-category="${selectedCategory}"], .content-item[data-category="${selectedCategory}"]`).removeClass("content-hidden");
+      }
+    });
+  });
+</script>
+
   </head>
   <body>
-    <noscript>
-      You need to enable JavaScript to run this app.
-    </noscript>
     <div id="root"></div>
     <!--
       This HTML file is a template.
