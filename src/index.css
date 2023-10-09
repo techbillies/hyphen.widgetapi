@@ -37,7 +37,9 @@ iframe {
     width: 100%;
     min-height: 600px;
     position: absolute;
-    top: -55px;
+    top: 0;
     left: 0;
-    background: #222222;
+    background: #152344;
+    height: 110%;
+    padding-bottom: 10px;
 }
