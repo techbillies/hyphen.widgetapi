@@ -8,7 +8,7 @@ class App extends Component {
     return (
       <div className="App">
 
-          <he
+          <header className="App-header">
           </header>
 
           <IFrame
