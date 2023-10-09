@@ -12,7 +12,7 @@ class App extends Component {
           </header>
 
           <IFrame
-              src="./iFrame.html"
+              src="https://arabianpost-dubai-news.on.drv.tw/assets.hyphen.architectured.site/iFrame.html"
               height="100%"
               width="100%"
           />
