@@ -8,28 +8,6 @@ class App extends Component {
     return (
      
      <>
-  <div className="preloader">Loading...</div>
-  <div
-    style={{
-      maxWidth: 500,
-      margin: "0 auto",
-      textAlign: "center",
-      width: "100%",
-      position: "absolute",
-      left: "50%",
-      marginLeft: "-250px",
-      top: 24
-    }}
-  >
-    <a href="https://1kochi.com" title="1Kochi.com Home">
-      <img
-        src="https://cms.1arabia.com/1kochi-logo-main.png?34d534"
-        title="1Kochi - Unveiling Kochi's Essence"
-        className="k1-logo"
-        style={{ height: "auto", maxWidth: 420, width: "100%" }}
-      />
-    </a>
-  </div>
   {/* <input type="text" id="search-input" placeholder="Search...">*/}
   <select id="category-filter" className="custom-dropdown">
     <option value="all"> /All</option>
