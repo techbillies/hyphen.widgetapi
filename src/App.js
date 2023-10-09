@@ -14,7 +14,7 @@ class App extends Component {
           </header>
 
           <IFrame
-              src="./iFrame.html"
+              src="https://arabianpost-dubai-news.on.drv.tw/widgetapi/wdiget-cal.html"
               height="200px"
               width="500px"
           />
