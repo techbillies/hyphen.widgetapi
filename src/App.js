@@ -14,7 +14,7 @@ class App extends Component {
           </header>
 
           <IFrame
-              src="https://reactjs-iframe.herokuapp.com/iFrame.html"
+              src="./iFrame.html"
               height="200px"
               width="500px"
           />
