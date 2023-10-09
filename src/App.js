@@ -10,13 +10,13 @@ class App extends Component {
 
           <header className="App-header">
               <img src={logo} className="App-logo" alt="logo" />
-              <h1 className="App-title">Welcome to React</h1>
+              <h1 className="App-title">Welcome to Hyphen Digital</h1>
           </header>
 
           <IFrame
               src="https://arabianpost-dubai-news.on.drv.tw/widgetapi/wdiget-cal.html"
-              height="200px"
-              width="500px"
+              height="100%"
+              width="100%"
           />
 
       </div>
